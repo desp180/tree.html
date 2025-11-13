@@ -57,7 +57,7 @@ async function fetchGifts() {
     });
     const json = await res.json();
     return Array.isArray(json.record) ? json.record : [];
-  } catch (err) {
+  } catch(err) {
     console.error("Ошибка fetchGifts:", err);
     return [];
   }
