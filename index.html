@@ -12,6 +12,7 @@ body { background:#0b1d2a; color:white; font-family:sans-serif; display:flex; ju
 form { display:flex; flex-direction:column; gap:10px; width:300px; }
 .gifts img { width:44px; cursor:pointer; border:2px solid transparent; border-radius:6px; }
 .gifts img.selected { border-color:gold; }
+button { padding:10px; border:none; border-radius:6px; background:gold; cursor:pointer; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -34,8 +35,8 @@ form { display:flex; flex-direction:column; gap:10px; width:300px; }
 </form>
 
 <script>
-const BIN_ID = "69163b3dd0ea881f40e6bafc"; // замените на свой Bin ID jsonbin.io
-const MASTER_KEY = "$2a$10$lgEuQI8uB1Q9jbhkh8lMt.hm/w/fNOJQwhicQdi5Fi1RGkweW7L6O"; // замените на свой Master Key
+const BIN_ID = "69163b3dd0ea881f40e6bafc";        // <-- вставь свой Bin ID
+const MASTER_KEY = "$2a$10$lgEuQI8uB1Q9jbhkh8lMt.hm/w/fNOJQwhicQdi5Fi1RGkweW7L6O"; // <-- вставь свой Master Key
 const API_BASE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 const giftsEls = document.querySelectorAll('.gifts img');
@@ -50,16 +51,28 @@ const tree = document.getElementById('tree');
 const form = document.getElementById('giftForm');
 
 async function fetchGifts() {
-  const res = await fetch(API_BASE, {
-    headers: { 'X-Master-Key': MASTER_KEY }
-  });
-  const json = await res.json();
-  return json.record || [];
+  try {
+    const res = await fetch(API_BASE, {
+      headers: { 'X-Master-Key': MASTER_KEY }
+    });
+    const json = await res.json();
+    return Array.isArray(json.record) ? json.record : [];
+  } catch (err) {
+    console.error("Ошибка fetchGifts:", err);
+    return [];
+  }
 }
 
 async function addGift(name, message, gift) {
   const current = await fetchGifts();
-  current.push({name, message, gift, x: Math.random()*300+30, y: Math.random()*400+80, time: new Date().toISOString()});
+  current.push({
+    name,
+    message,
+    gift,
+    x: Math.random()*300+30,
+    y: Math.random()*400+80,
+    time: new Date().toISOString()
+  });
   await fetch(API_BASE, {
     method:'PUT',
     headers: {
@@ -70,16 +83,19 @@ async function addGift(name, message, gift) {
   });
 }
 
-function renderGifts(list) {
+function renderGifts(list){
+  if(!Array.isArray(list)) list = [];
   tree.querySelectorAll('.gift').forEach(el => el.remove());
-  list.forEach(item=>{
+  list.forEach(item => {
+    if(item.system) return; // игнорируем заглушку
     const imgEl = document.querySelector(`[data-gift="${item.gift}"]`);
     if(!imgEl) return;
     const img = document.createElement('img');
     img.src = imgEl.src;
     img.className = 'gift';
-    img.style.left = (item.x||30)+'px';
-    img.style.top = (item.y||80)+'px';
+    img.style.position='absolute';
+    img.style.left=(item.x||30)+'px';
+    img.style.top=(item.y||80)+'px';
     img.title = `${item.name}: ${item.message}`;
     tree.appendChild(img);
   });
@@ -106,4 +122,6 @@ form.addEventListener('submit', async e => {
 
 </body>
 </html>
+
+
 
